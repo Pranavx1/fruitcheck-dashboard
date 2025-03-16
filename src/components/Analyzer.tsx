@@ -4,22 +4,8 @@ import ImageUploader from "./ImageUploader";
 import ResultCard from "./ResultCard";
 import { useToast } from "@/components/ui/use-toast";
 
-// Simulated backend response
-const simulateBackendAnalysis = (file: File): Promise<{ result: 'good' | 'bad', confidence: number }> => {
-  return new Promise((resolve) => {
-    // Simulate network delay
-    setTimeout(() => {
-      // This is where you would normally send the file to your Python backend
-      // We're simulating the response here
-      
-      // Generate a random result for demonstration
-      const result = Math.random() > 0.5 ? 'good' : 'bad';
-      const confidence = 70 + Math.random() * 25; // Random confidence between 70-95%
-      
-      resolve({ result, confidence });
-    }, 2000); // 2 second delay to simulate processing
-  });
-};
+// Backend API URL (change this to your actual backend URL)
+const BACKEND_URL = "http://localhost:5000";
 
 const Analyzer: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -31,18 +17,38 @@ const Analyzer: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
-      // This is where you would send the image to your backend
-      // For now, we'll use our simulation function
-      console.log("Analyzing image:", file.name);
+      // Convert file to base64
+      const base64Image = await fileToBase64(file);
+      console.log("Converting image to base64");
       
-      const response = await simulateBackendAnalysis(file);
-      setResult(response.result);
-      setConfidence(response.confidence);
-      
-      toast({
-        title: "Analysis complete",
-        description: `The image has been classified as ${response.result}.`,
+      // Send to backend
+      console.log("Sending image to backend for analysis");
+      const response = await fetch(`${BACKEND_URL}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Received analysis result:", data);
+      
+      if (data.success) {
+        setResult(data.result);
+        setConfidence(data.confidence);
+        
+        toast({
+          title: "Analysis complete",
+          description: `The image has been classified as ${data.result}.`,
+        });
+      } else {
+        throw new Error(data.error || "Analysis failed");
+      }
     } catch (error) {
       console.error("Error analyzing image:", error);
       toast({
@@ -50,9 +56,43 @@ const Analyzer: React.FC = () => {
         title: "Analysis failed",
         description: "There was an error analyzing your image. Please try again."
       });
+      
+      // Fallback to simulation if the backend is not available
+      fallbackToSimulation(file);
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Fallback to client-side simulation if the backend is not available
+  const fallbackToSimulation = (file: File) => {
+    console.log("Falling back to client-side simulation");
+    // Simulate network delay
+    setTimeout(() => {
+      // Generate a random result for demonstration
+      const result = Math.random() > 0.5 ? 'good' : 'bad' as 'good' | 'bad';
+      const confidence = 70 + Math.random() * 25; // Random confidence between 70-95%
+      
+      setResult(result);
+      setConfidence(confidence);
+      
+      toast({
+        title: "Analysis complete (simulated)",
+        description: `The image has been classified as ${result}.`,
+      });
+      
+      setIsAnalyzing(false);
+    }, 2000);
+  };
+
+  // Convert File to base64 string
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   const resetAnalysis = () => {
