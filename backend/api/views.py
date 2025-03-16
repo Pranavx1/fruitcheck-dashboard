@@ -1,21 +1,20 @@
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 import base64
+import json
+import logging
 import random
 import time
-import os
-import logging
-
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.route('/analyze', methods=['POST'])
-def analyze_image():
+@csrf_exempt  # Disable CSRF for this POST endpoint
+@require_http_methods(["POST"])
+def analyze_image(request):
     """
     Endpoint to analyze uploaded images.
     Expects a base64 encoded image in the request JSON.
@@ -23,14 +22,14 @@ def analyze_image():
     """
     try:
         # Get the image from the request
-        data = request.json
+        data = json.loads(request.body)
         if not data or 'image' not in data:
-            return jsonify({'error': 'No image data provided'}), 400
+            return JsonResponse({'error': 'No image data provided'}, status=400)
         
         # The image is sent as base64 string
         image_data = data['image']
         if not image_data.startswith('data:image'):
-            return jsonify({'error': 'Invalid image format'}), 400
+            return JsonResponse({'error': 'Invalid image format'}, status=400)
         
         # Log the request
         logger.info(f"Received image analysis request: {len(image_data)} bytes")
@@ -46,7 +45,7 @@ def analyze_image():
         logger.info(f"Analysis complete: Result = {result}, Confidence = {confidence:.2f}%")
         
         # Return the result
-        return jsonify({
+        return JsonResponse({
             'success': True,
             'result': result,
             'confidence': confidence
@@ -54,13 +53,9 @@ def analyze_image():
     
     except Exception as e:
         logger.error(f"Error processing image: {str(e)}")
-        return jsonify({'error': f'Error processing image: {str(e)}'}), 500
+        return JsonResponse({'error': f'Error processing image: {str(e)}'}, status=500)
 
-@app.route('/healthcheck', methods=['GET'])
-def healthcheck():
+@require_http_methods(["GET"])
+def healthcheck(request):
     """Simple endpoint to check if the server is running"""
-    return jsonify({'status': 'ok'})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    return JsonResponse({'status': 'ok'})

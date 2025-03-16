@@ -1,7 +1,7 @@
 
-# SpectraVision Backend Simulator
+# SpectraVision Backend - Django Version
 
-This is a simple Flask application that simulates a backend for the SpectraVision project. 
+This is a Django application that simulates a backend for the SpectraVision project.
 It provides an API endpoint that accepts image uploads and returns simulated classification results.
 
 ## Setup and Running
@@ -17,16 +17,26 @@ It provides an API endpoint that accepts image uploads and returns simulated cla
    pip install -r requirements.txt
    ```
 
-3. Run the application:
+3. Run initial database migrations:
    ```
-   python app.py
+   python manage.py migrate
    ```
 
-The server will start on port 5000 by default.
+4. Create a superuser (optional, for admin access):
+   ```
+   python manage.py createsuperuser
+   ```
+
+5. Run the development server:
+   ```
+   python manage.py runserver 0.0.0.0:5000
+   ```
+
+The server will start on port 5000 to maintain compatibility with the frontend.
 
 ## API Endpoints
 
-### POST /analyze
+### POST /analyze/
 Accepts a JSON payload with a base64-encoded image and returns a simulated quality analysis.
 
 Example request:
@@ -45,7 +55,7 @@ Example response:
 }
 ```
 
-### GET /healthcheck
+### GET /healthcheck/
 Returns a simple status message to verify the server is running.
 
 Example response:
@@ -55,10 +65,12 @@ Example response:
 }
 ```
 
+## Admin Interface
+
+Django provides a built-in admin interface at `/admin/` where you can manage your application data.
+You'll need to create a superuser first (see setup instructions above).
+
 ## Connecting with the Frontend
 
-This backend is designed to work with the SpectraVision frontend. You'll need to:
-
-1. Make sure the backend is running on http://localhost:5000
-2. Update the frontend to send image data to the /analyze endpoint
-3. Process the response to display the classification results
+This backend is designed to work with the SpectraVision frontend. The API endpoints are compatible
+with the existing frontend code. Make sure the backend is running on http://localhost:5000.
