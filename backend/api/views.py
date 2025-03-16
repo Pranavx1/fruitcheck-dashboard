@@ -20,8 +20,11 @@ def analyze_image(request):
         if not data or 'image' not in data:
             return JsonResponse({'error': 'No image provided'}, status=400)
         
-        # Simulate processing time (2 seconds)
-        time.sleep(2)
+        # At this point, we have the base64 image in data['image']
+        # In a real application, we'd process the image here
+        
+        # Simulate processing time (1 second)
+        time.sleep(1)
         
         # Simulate a random result
         result = 'good' if random.random() > 0.5 else 'bad'

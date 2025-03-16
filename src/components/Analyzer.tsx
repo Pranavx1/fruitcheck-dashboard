@@ -19,7 +19,7 @@ const Analyzer: React.FC = () => {
       const base64Image = await fileToBase64(file);
       
       // Send to backend
-      const response = await fetch("http://localhost:5000/analyze", {
+      const response = await fetch("http://localhost:5000/analyze/", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ const Analyzer: React.FC = () => {
         description: "There was an error. Please try again."
       });
       
-      // Fallback to simulation
+      // Fallback to simulation if server is unavailable
       simulateAnalysis();
     } finally {
       setIsAnalyzing(false);
